@@ -1,0 +1,92 @@
+//OpenModelica
+model lab06
+constant Real a = 0.01; //коэф заболеваемости
+constant Real b = 0.02; //коэф выздоровления
+constant Real N = 12000; //общее число популяции
+
+
+Real R; // здоровые, с иммунитетом
+Real I; // заболевшие
+Real S; // здоровые, в зоне риска
+
+initial equation
+R = 12;
+I = 212; //кол-во заболевших в t = 0
+S = N-I-R;
+
+equation
+//Случай 1: I>I*
+
+der(S) = - a * S;
+der(I) = a * S-b * I;
+der(R) = b * I; 
+
+
+//Случай 2: I<=I*
+
+/*
+der(S) = 0;
+der(I) = -b * I;
+der(R) = b * I; 
+*/
+
+end lab06;
+
+
+// Julia
+using Plots
+using DifferentialEquations
+
+const N = 12000
+const I0 = 212
+const R0 = 12
+
+const alpha = 0.01 
+const beta = 0.02
+
+S0 = N - I0 - R0
+
+T = (0, 200)
+
+u0 = [S0, I0, R0]
+
+p1 = (beta)
+
+# I0 < I*
+
+function F1(du, u, p, t)
+    beta = p
+    du[1] = 0
+    du[2] = -beta*u[2]
+    du[3] = beta*u[2]
+end
+
+prob1 = ODEProblem(F1, u0, T, p1)
+sol1 = solve(prob1, dtmax=0.01)
+
+plt = plot(sol1, vars=(0,1), color=:red, label="S(t)", title="Изменения числа особей в группе S", xlabel="t")
+plt2 = plot(sol1, vars=(0,2), color=:blue, label="I(t)", title="Изменения числа особей в группах I и R", xlabel="t")
+plot!(plt2, sol1, vars=(0,3), color=:green, label="R(t)")
+
+savefig(plt, "Julia11.png")
+savefig(plt2, "Julia12.png")
+
+# I0 > I*
+
+p2 = (alpha, beta)
+
+function F2(du, u, p, t)
+    alpha, beta = p
+    du[1] = -alpha*u[1]
+    du[2] = alpha*u[1]-beta*u[2]
+    du[3] = beta*u[2]
+end
+
+prob2 = ODEProblem(F2, u0, T, p2)
+sol2 = solve(prob2, dtmax=0.01)
+
+plt = plot(sol2, vars=(0,1), color=:red, label="S(t)", title="Изменения числа особей в группах", xlabel="t")
+plot!(plt, sol2, vars=(0,2), color=:blue, label="I(t)")
+plot!(plt, sol2, vars=(0,3), color=:green, label="R(t)")
+
+savefig(plt, "Julia2.png")

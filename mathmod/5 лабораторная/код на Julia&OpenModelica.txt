@@ -1,0 +1,48 @@
+//OpenModelica
+model Lab5
+parameter Integer x0 = 11;
+parameter Integer y0 = 16;
+parameter Real a = 0.37;
+parameter Real b = 0.034;
+parameter Real c = 0.17;
+parameter Real d = 0.046;
+Real x(start=x0);
+Real y(start=y0);
+
+equation
+der(x) = -c*x+d*x*y;
+der(y) = a*y-b*x*y;
+end Lab5;
+
+// Julia
+using Plots
+using DifferentialEquations
+
+const x0 = 11
+const y0 = 16
+const c = 0.17
+const d = 0.046
+const a = 0.37
+const b = 0.034
+
+T = (0, 400)
+
+u0 = [x0, y0]
+
+p = (a, b, c, d)
+
+function F(du, u, p, t)
+    a, b, c, d = p
+    du[1] = -c*u[1]+d*u[1]*u[2]
+    du[2] = a*u[2]-b*u[1]*u[2]
+end
+
+prob1 = ODEProblem(F, u0, T, p)
+sol1 = solve(prob1, dtmax=0.1)
+
+plt = plot(sol1, vars=(2,1), color=:red, label="Фазовый портрет", title="Зависимость численности хищников от численности жертв", xlabel="Численность жертв", ylabel="Численность хищников")
+plt2 = plot(sol1, vars=(0,1), color=:blue, label="Численность хищников", title="Изменение численности хищников и жертв", xlabel="t")
+plot!(plt2, sol1, vars=(0,2), color=:green, label="Численность жертв")
+
+savefig(plt, "Julia1.png")
+savefig(plt2, "Julia2.png")
